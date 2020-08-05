@@ -1,0 +1,98 @@
+# Azure DevOps Sample Pipeline that demonstrate end-to-end flow of automated 
+#   start/deploy/test/publish of integration test using this framework
+trigger:
+  batch: true
+  branches:
+    include:
+    - 'master'
+  paths:
+    include:
+    - 'sample/*'
+
+variables:
+  - name: azureKeyVault
+    value: $(azure-keyvault-name)
+  - name: azureTenantId
+    value: $(azure-tenant-id)
+  - name: integrationTestSPId
+    value: $(integration-test-sp-id)
+  - name: integrationTestSPSecret
+    value: $(integration-test-sp-secret)
+  - name: sourceDirectory
+    value: "."
+
+stages:
+- stage: IntegrationTest
+  displayName: Setup the environment
+  jobs:
+  - job: 'IntegrationTestExecution'
+    displayName: 'Integration Test Execution'
+    pool:
+      vmImage: ubuntu-18.04
+    steps:
+    - bash: |
+        sudo apt update
+        sudo apt --fix-broken install -y
+        sudo apt install python3-pip -y
+        pip3 install setuptools
+        pip3 install pylint coverage
+      displayName: 'Install OS Packages'
+
+    - bash: |
+        sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+        sudo apt update
+        sudo apt install docker-ce -y
+        sudo systemctl status docker
+        sudo usermod -a -G docker ${USER}
+        docker info
+      displayName: 'Install Docker'
+
+    - script: bash -f ./start.sh 
+      displayName: 'Start KIND'
+      continueOnError: true
+      workingDirectory: $(sourceDirectory)
+
+    - bash: |
+        # Adding https://github.com/Azure-Samples/helm-charts/tree/master/chart-source/azure-vote
+        linux-amd64/helm repo add azure-samples https://azure-samples.github.io/helm-charts/
+        # Mention the Helm Command Set Parameters
+        HELM_CHART_SET_PARAMETERS=$(cat <<-END
+        title="Kind Integration Test Framework Demo",
+        value1="Kubernetes",
+        value2="DockerSwarm",
+        serviceType="ClusterIP"
+        END
+        )
+        bash -f ./deploy.sh \
+          --csi-driver-enabled=no \
+          --acr-imagepullsecret-enabled=no \
+          --helm-chart-path=azure-samples/azure-vote \
+          --helm-chart-release-name=sample-azure-vote \
+          --helm-chart-set-parameters="${HELM_CHART_SET_PARAMETERS}" \
+          --kubectl-check-services=vote-front-sample-azure-vote,vote-back-sample-azure-vote \
+          --kubectl-check-services-selector-label=app \
+          --kubectl-port-forward-services=azure-vote-front
+      displayName: 'Deploy Services'
+      continueOnError: true
+      workingDirectory: $(sourceDirectory)
+
+    - bash: |
+        pip3 install unittest-xml-reporting
+        python3 -m xmlrunner sample/integrationtest.py -o ./test-reports
+      displayName: 'Execute Test Cases'
+      continueOnError: true
+      workingDirectory: $(sourceDirectory)
+    
+    - bash: |
+        bash -f ./stop.sh
+      displayName: 'Stop KIND'
+      continueOnError: true
+      workingDirectory: $(sourceDirectory)
+    
+    - task: PublishTestResults@1
+      inputs:
+        testResultsFiles: '$(sourceDirectory)/test-reports/TEST-*.xml'
+        testRunTitle: 'Integration Test'
+      displayName: 'Publish Test Results'
