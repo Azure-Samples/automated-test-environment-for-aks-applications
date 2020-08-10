@@ -75,3 +75,8 @@ It is expected to get Integration Test executed from CI Pipeline independently w
 Some additional points need to be considered -
 
 * While using Private Endpoint enabled `Azure Key Vault (AKV)` or `Azure Container Registry (ACR)` for applications, make sure the to use CI Pipeline Agent deployed in the same subnet where `AKV` or `ACR` endpoints are enabled
+
+
+## References
+
+* [Use KIND (Kubernetes in Docker) in CI/CD reliably - by @lawrencegripper](https://blog.gripdev.xyz/2020/01/15/use-kind-kubernetes-in-docker-in-ci-cd-reliably/)
