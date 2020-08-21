@@ -1,6 +1,6 @@
 # Automated Test Environment for AKS Applications
 
-Framework to create Automated Test Environment using [KIND](https://kind.sigs.k8s.io/) for testing Azure Kubernetes Service (AKS) based applications in CI (Continuous Integration) Pipeline (Azure DevOps), where required dependencies/infrastructure will be provisioned for executing automated tests and deprovisioned after completion.
+Framework to create Automated Test Environment using [KIND](https://kind.sigs.k8s.io/) for testing Azure Kubernetes Service (AKS) based applications in CI (Continuous Integration) Pipeline (Azure DevOps), where required dependencies/infrastructure will be provisioned for executing automated tests and de-provisioned after completion.
 
 Testing the applications to be deployed over Kubernetes means either the Cluster is already available or is to be deployed on the go before you test, in former case its a cost to keep the Cluster live and in later it takes a lot of time to bring up the kubernetes cluster.
 
@@ -21,7 +21,7 @@ This is a very simple Framework, that creates Automated Test Environment to enab
 3. Optional - [Azure Container Registry (ACR) Image Pull Secret](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-kubernetes#create-an-image-pull-secret)
 4. Install `helm` charts of application (values needed for integration test environment can be overwritten easily)
 5. Validate if the respective Kubernetes `pods` are up and running (multiple `pods` can be provided that are having selector - `app.kubernetes.io/name`)
-6. [Port-Froward](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/#forward-a-local-port-to-a-port-on-the-pod) the respective Kubernetes `services` needed to perform integration testing (multiple `services` can be provided and the respective local ports will be starting from `8080` to `808[number of services]` maintaining the order as provided)
+6. [Port-Forward](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/#forward-a-local-port-to-a-port-on-the-pod) the respective Kubernetes `services` needed to perform integration testing (multiple `services` can be provided and the respective local ports will be starting from `8080` to `808[number of services]` maintaining the order as provided)
 
 ## Getting Started
 
